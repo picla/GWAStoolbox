@@ -129,13 +129,13 @@ for pv in ['pv10', 'pv20', 'pv21']:
     gwas_pv.columns = ['chrom', 'pos', 'pv'] 
     plot.manhattan(gwas_pv)
     plt = plot.get_pyplot() 
-    plt.savefig(f'{args.outDir}/manhattanPlot_{trait}_{args.maf}_{test}.png')
+    plt.savefig(f"{args.outDir}/manhattanPlot_{'_'.join(traits)}_{args.maf}_{test}.png")
     plt.close()
 
     # QQ-plot
     plot.qqplot(gwas_pv.pv)
     plt = plot.get_pyplot()
-    plt.savefig(f'{args.outDir}/qqPlot_{trait}_{args.maf}_{test}.png')
+    plt.savefig(f"{args.outDir}/qqPlot_{'_'.join(traits)}_{args.maf}_{test}.png")
     plt.close()
 
     # save results
@@ -145,7 +145,7 @@ for pv in ['pv10', 'pv20', 'pv21']:
     gwas_pv['GVE'] = np.nan
     gwas_pv.columns.values[0] = 'chr'
     gwas_pv.columns.values[2] = 'pvalue'
-    gwas_pv.to_csv(f'{args.outDir}/{trait}_{args.maf}_MTMM_{test}.csv', index = False)
+    gwas_pv.to_csv(f"{args.outDir}/{'_'.join(traits)}_{args.maf}_MTMM_{test}.csv", index = False)
 
 
 '''
