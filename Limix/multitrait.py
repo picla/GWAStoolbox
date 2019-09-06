@@ -30,14 +30,6 @@ parser.add_argument('-m', '--maf', help = 'Specify the minor allele frequecny cu
 parser.add_argument('-o', '--outDir', help = 'Specify the output directory. All results will be saved in this directory.', required = True)
 args = parser.parse_args()
 
-# FOR TESTING
-pheno = pd.read_csv('/groups/nordborg/user/pieter.clauw/Documents/Collaborations/TriploidSeedSize/Data/MTMM.csv', index_col = 0)
-
-genoFile = '/scratch-cbe/users/pieter.clauw/genotypes_for_pygwas/1.0.0/full_imputed/all_chromosomes_binary.hdf5'
-
-kinFile = '/scratch-cbe/users/pieter.clauw/genotypes_for_pygwas/1.0.0/full_imputed/kinship_ibs_binary_mac5.h5py'
-
-
 # Phenotype (Y)
 pheno = pd.read_csv(args.phenotype, index_col = 0)
 traits =  pheno.columns.values
@@ -146,17 +138,5 @@ for pv in ['pv10', 'pv20', 'pv21']:
     gwas_pv.columns.values[0] = 'chr'
     gwas_pv.columns.values[2] = 'pvalue'
     gwas_pv.to_csv(f"{args.outDir}/{'_'.join(traits)}_{args.maf}_MTMM_{test}.csv", index = False)
-
-
-'''
-# TODO: write three results files so that each can be uploaded in GWAS portal
-# Save results
-gwas_results['maf'] = SNPs_MAF
-gwas_results['mac'] = gwas_results.maf * len(acn_indices) 
-gwas_results.mac = gwas_results.mac.astype(int)   
-gwas_results['GVE'] = np.nan
-gwas_results.columns.values[0] = 'chr' 
-gwas_results.to_csv(f'{args.outDir}/{trait}_{args.maf}.csv', index = False)
-'''
 
 
