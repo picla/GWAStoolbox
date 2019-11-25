@@ -34,7 +34,7 @@ args = parser.parse_args()
 pheno = pd.read_csv(args.phenotype, index_col = 0)
 trait = os.path.basename(args.phenotype)[:-4] 
 # remove NA values
-pheno = pheno[np.isfinite(pheno)]
+pheno = pheno[np.isfinite(pheno[trait])]
 # enocde pheno.index to UTF8, for complemetarity with SNP matrix accessions
 pheno.index = pheno.index.map(lambda x: str(x).encode('UTF8'))
 acnNrInitial = len(pheno.index)
@@ -91,10 +91,11 @@ chrom = [bisect(chrIdx[:, 1], snpIdx) + 1 for snpIdx in SNP_indices]
 positions = geno_hdf['positions'][:]
 pos = [positions[snp] for snp in SNP_indices]
 pvalues = r.stats.pv20.tolist()
+effsizes = r.effsizes['h2']['effsize'][r.effsizes['h2']['effect_type'] == 'candidate'].to_list() 
 Bonferroni = multitest.multipletests(pvalues, alpha = 0.05, method = 'fdr_bh')[3]
 
-gwas_tuples = list(zip(chrom, pos, pvalues))
-gwas_results = pd.DataFrame(gwas_tuples, columns = ['chrom', 'pos', 'pv'])
+gwas_tuples = list(zip(chrom, pos, effsizes, pvalues))
+gwas_results = pd.DataFrame(gwas_tuples, columns = ['chrom', 'pos', 'effsize', 'pv'])
 
 # plot results
 # Manhattan plot
