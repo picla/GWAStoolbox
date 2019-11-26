@@ -94,8 +94,8 @@ pvalues = r.stats.pv20.tolist()
 effsizes = r.effsizes['h2']['effsize'][r.effsizes['h2']['effect_type'] == 'candidate'].to_list() 
 Bonferroni = multitest.multipletests(pvalues, alpha = 0.05, method = 'fdr_bh')[3]
 
-gwas_tuples = list(zip(chrom, pos, effsizes, pvalues))
-gwas_results = pd.DataFrame(gwas_tuples, columns = ['chrom', 'pos', 'effsize', 'pv'])
+gwas_tuples = list(zip(chrom, pos, pvalues))
+gwas_results = pd.DataFrame(gwas_tuples, columns = ['chrom', 'pos', 'pv'])
 
 # plot results
 # Manhattan plot
@@ -115,7 +115,7 @@ plt.close()
 gwas_results['maf'] = SNPs_MAF
 gwas_results['mac'] = gwas_results.maf * len(acn_indices) 
 gwas_results.mac = gwas_results.mac.astype(int)   
-gwas_results['GVE'] = np.nan
+gwas_results['GVE'] = effsizes 
 gwas_results.columns.values[0] = 'chr' 
 gwas_results.columns.values[2] = 'pvalue'
 gwas_results.to_csv(f'{args.outDir}/{trait}_{args.maf}.csv', index = False)
