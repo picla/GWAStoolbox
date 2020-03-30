@@ -1,13 +1,8 @@
 #!/bin/python
 
 '''
-Script to run GWAS with specified locus as fixed effect
-specifically for collaboration with BOKU
-
-requires 10GB  memory, maybe less
-srun --mem 10GB --pty bash
+Script to run marginal GWAS
 '''
-
 
 from limix.qtl import scan
 import pandas as pd
@@ -41,7 +36,6 @@ acnNrInitial = len(pheno.index)
 
 # Genotype (G)
 genoFile = f'{args.genotype}/all_chromosomes_binary.hdf5'
-
 geno_hdf = h5py.File(genoFile, 'r')
 
 acn_indices = [np.where(geno_hdf['accessions'][:] == acn)[0][0] for acn in pheno.index]
