@@ -36,23 +36,25 @@ traits =  pheno.columns.values
 # TODO: test if limix can handle NAs. if so, make this optional
 # remove NA values
 pheno = pheno.dropna(axis = 0, how = 'any') 
-# enocde pheno.index to UTF8, for complemetarity with SNP matrix accessions
+# encode pheno.index to UTF8, for complemetarity with SNP matrix accessions
 pheno.index = pheno.index.map(lambda x: str(x).encode('UTF8'))
 acnNrInitial = len(pheno.index)
 
 # Genotype (G)
-genoFile = f'{args.genotype}/all_chromosomes_binary.hdf5'
+genoFile = f'{args.genotype}all_chromosomes_binary.hdf5'
 
 geno_hdf = h5py.File(genoFile, 'r')
+
+# check whihc accessions have been genotyped
+acn_genotyped = [acn for acn in pheno.index if acn in geno_hdf['accessions'][:]]
+# subset phenotype data
+pheno = pheno.loc[acn_genotyped]
 
 acn_indices = [np.where(geno_hdf['accessions'][:] == acn)[0][0] for acn in pheno.index]
 acn_indices.sort()
 acn_order = geno_hdf['accessions'][acn_indices]
 G = geno_hdf['snps'][:, acn_indices]
-# subset pheno in case of non-genotyped accessions
-if len(acn_indices) != len(pheno.index):
-    acns = list(set(pheno.index) & set(geno_hdf['accessions'][:]))
-    pheno = pheno[acns]
+
 # select only SNPs with minor allele frequecny above threshold
 AC1 = G.sum(axis = 1)
 AC0 = G.shape[1] - AC1
@@ -68,7 +70,7 @@ print(f'{len(SNP_indices)} SNPs had a minor allele frequency higher than {args.m
 G = G.transpose()
 
 # Kinship (K)
-kinFile = f'{args.genotype}/kinship_ibs_binary_mac5.h5py'
+kinFile = f'{args.genotype}kinship_ibs_binary_mac5.h5py'
 kin_hdf = h5py.File(kinFile, 'r')
 # select kinship only for phenotyped and genotyped accessions
 acn_indices = [np.where(kin_hdf['accessions'][:] == acn)[0][0] for acn in pheno.index]
@@ -88,9 +90,6 @@ A1 = np.eye(len(traits))
 # M = np.repeat(1, Y.shape[0]) 
 
 r = scan(G, Y, K = K, lik = 'normal', A = A, A0 = A0, A1 = A1, verbose = True)
-
-
-
 
 # save results
 # link chromosome and positions to p-values and effect sizes
@@ -123,12 +122,14 @@ for pv in ['pv10', 'pv20', 'pv21']:
     plt = plot.get_pyplot() 
     plt.savefig(f"{args.outDir}/manhattanPlot_{'_'.join(traits)}_{args.maf}_{test}.png")
     plt.close()
+    print(f"saved manhattan plot for test {pv} to {args.outDir}")
 
     # QQ-plot
     plot.qqplot(gwas_pv.pv)
     plt = plot.get_pyplot()
     plt.savefig(f"{args.outDir}/qqPlot_{'_'.join(traits)}_{args.maf}_{test}.png")
     plt.close()
+    print(f"saved QQ-plot for test {pv} to {args.outDir}")
 
     # save results
     gwas_pv['maf'] = SNPs_MAF
@@ -138,5 +139,6 @@ for pv in ['pv10', 'pv20', 'pv21']:
     gwas_pv.columns.values[0] = 'chr'
     gwas_pv.columns.values[2] = 'pvalue'
     gwas_pv.to_csv(f"{args.outDir}/{'_'.join(traits)}_{args.maf}_MTMM_{test}.csv", index = False)
+    print(f"saved results for test {pv} to {args.outDir}")
 
 
