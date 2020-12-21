@@ -20,7 +20,8 @@ import math
 # Parameters
 parser = argparse.ArgumentParser(description = 'Parse parameters for multilocus GWAS')
 parser.add_argument('-p', '--phenotype', help = 'Path to phenotype file. CSV file with accession ID in forst column, phenptype values in second column. Filename is used as phenotype name.', required = True)
-parser.add_argument('-g', '--genotype', help = 'Path to genotype directory.This directory should contain boht the SNP and kinship matrix. Versions are the same as used for PyGWAS.', required = True)
+parser.add_argument('-g', '--genotype', help = 'Path to genotype file. This is an hdf5 file containing the snp matrix under /snps, list of accessions under /accessions and list of snp coordinates under /positions with attribute chr_regions. Similar to standard input format for PyGWAS.', required = True)
+parser.add_argument('-k', '--kinship', help = 'Path to kinship file. This is an hdf5 file containing the kinship matrix under /kinship and list of accessions under /accessions. Similar to standard input format for PyGWAS.', required = True)
 parser.add_argument('-m', '--maf', help = 'Specify the minor allele frequecny cut-off. Default is set to 0.05', default = 0.05)
 parser.add_argument('-o', '--outDir', help = 'Specify the output directory. All results will be saved in this directory.', required = True)
 args = parser.parse_args()
@@ -35,8 +36,7 @@ pheno.index = pheno.index.map(lambda x: str(x).encode('UTF8'))
 acnNrInitial = len(pheno.index)
 
 # Genotype (G)
-genoFile = f'{args.genotype}/all_chromosomes_binary.hdf5'
-geno_hdf = h5py.File(genoFile, 'r')
+geno_hdf = h5py.File(args.genotype, 'r')
 
 acn_indices = [np.where(geno_hdf['accessions'][:] == acn)[0][0] for acn in pheno.index]
 acn_indices.sort()
@@ -59,10 +59,11 @@ print(f'Of the {acnNrInitial} phenotyped accessions, {len(acn_indices)} accessio
 print(f'{len(SNP_indices)} SNPs had a minor allele frequency higher than {args.maf}')
 # transpose G matrix into the required acccessions x SNPs format
 G = G.transpose()
+geno_hdf.close()
 
 # Kinship (K)
-kinFile = f'{args.genotype}/kinship_ibs_binary_mac5.h5py'
-kin_hdf = h5py.File(kinFile, 'r')
+kin_hdf = h5py.File(args.kinship, 'r')
+
 # select kinship only for phenotyped and genotyped accessions
 acn_indices = [np.where(kin_hdf['accessions'][:] == acn)[0][0] for acn in pheno.index]
 acn_indices.sort()
@@ -79,7 +80,7 @@ r = scan(G, Y, K = K, lik = "normal", M = None, verbose = True)
 
 # save results
 # link chromosome and positions to p-values and effect sizes
-geno_hdf = h5py.File(genoFile, 'r')
+geno_hdf = h5py.File(args.genotype, 'r')
 chrIdx = geno_hdf['positions'].attrs['chr_regions']
 chrom = [bisect(chrIdx[:, 1], snpIdx) + 1 for snpIdx in SNP_indices]
 positions = geno_hdf['positions'][:]
