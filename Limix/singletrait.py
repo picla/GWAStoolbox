@@ -38,14 +38,19 @@ acnNrInitial = len(pheno.index)
 # Genotype (G)
 geno_hdf = h5py.File(args.genotype, 'r')
 
+# select genotyped accessions
+acns = list(set(pheno.index) & set(geno_hdf['accessions'][:]))
+
+# subset phenotype if not all accessions have genotypes
+if len(acns) != len(pheno.index):
+    pheno = pheno.loc[acns]
+
+# subset genotype file
 acn_indices = [np.where(geno_hdf['accessions'][:] == acn)[0][0] for acn in pheno.index]
 acn_indices.sort()
 acn_order = geno_hdf['accessions'][acn_indices]
 G = geno_hdf['snps'][:, acn_indices]
-# subset pheno in case of non-genotyped accessions
-if len(acn_indices) != len(pheno.index):
-    acns = list(set(pheno.index) & set(geno_hdf['accessions'][:]))
-    pheno = pheno[acns]
+
 # select only SNPs with minor allele frequecny above threshold
 AC1 = G.sum(axis = 1)
 AC0 = G.shape[1] - AC1
